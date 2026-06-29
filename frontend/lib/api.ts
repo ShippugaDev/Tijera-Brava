@@ -1,5 +1,9 @@
-export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5050/api";
-export const API_ORIGIN = API_URL.replace(/\/api\/?$/, "");
+const apiConfigurada = (
+  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5050/api"
+).replace(/\/+$/, "");
+
+export const API_ORIGIN = apiConfigurada.replace(/\/api$/i, "");
+export const API_URL = `${API_ORIGIN}/api`;
 
 export class ApiError extends Error {
   constructor(
@@ -21,11 +25,25 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}): Prom
     }
   });
 
-  const data = await response.json().catch(() => null);
+  const contenido = await response.text();
+  let data: Record<string, unknown> | null = null;
+
+  if (contenido) {
+    try {
+      data = JSON.parse(contenido) as Record<string, unknown>;
+    } catch {
+      data = null;
+    }
+  }
 
   if (!response.ok) {
-    const detalle = Array.isArray(data?.errores) ? data.errores[0] : null;
-    throw new ApiError(detalle ?? data?.mensaje ?? "Error en la solicitud", response.status);
+    const errores = Array.isArray(data?.errores) ? data.errores : [];
+    const detalle = typeof errores[0] === "string" ? errores[0] : null;
+    const mensaje = typeof data?.mensaje === "string" ? data.mensaje : null;
+    throw new ApiError(
+      detalle ?? mensaje ?? response.statusText ?? "Error en la solicitud",
+      response.status
+    );
   }
 
   return data as T;

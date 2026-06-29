@@ -11,10 +11,12 @@ import type {
   RegistroClienteInput
 } from "../validators/autenticacion.validator";
 
+const esProduccion = () => process.env.NODE_ENV === "production";
+
 const obtenerOpcionesCookie = (): CookieOptions => ({
   httpOnly: true,
-  secure: process.env.NODE_ENV === "production",
-  sameSite: "lax",
+  secure: esProduccion(),
+  sameSite: esProduccion() ? "none" : "lax",
   path: "/",
   maxAge: obtenerMaxAgeCookie()
 });
@@ -100,8 +102,8 @@ export const obtenerMiSesion: RequestHandler = async (req, res, next) => {
 export const cerrarSesion: RequestHandler = (_req, res) => {
   res.clearCookie(obtenerCookieSesion(), {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    secure: esProduccion(),
+    sameSite: esProduccion() ? "none" : "lax",
     path: "/"
   });
 
