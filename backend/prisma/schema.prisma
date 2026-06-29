@@ -1,0 +1,517 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum EstadoCuenta {
+  PENDIENTE
+  ACTIVO
+  INACTIVO
+  SUSPENDIDO
+}
+
+enum EstadoAprobacion {
+  PENDIENTE
+  APROBADO
+  RECHAZADO
+  SUSPENDIDO
+}
+
+enum DiaSemana {
+  LUNES
+  MARTES
+  MIERCOLES
+  JUEVES
+  VIERNES
+  SABADO
+  DOMINGO
+}
+
+enum EstadoReserva {
+  PENDIENTE
+  CONFIRMADA
+  EN_CAMINO
+  EN_SERVICIO
+  FINALIZADA
+  CANCELADA_CLIENTE
+  CANCELADA_BARBERO
+  CANCELADA_ADMINISTRACION
+  RECHAZADA
+}
+
+enum MetodoPago {
+  EFECTIVO
+  YAPE
+  PLIN
+  TRANSFERENCIA
+}
+
+enum EstadoPago {
+  PENDIENTE
+  COMPROBANTE_SUBIDO
+  CONFIRMADO
+  CANCELADO
+  REEMBOLSADO
+}
+
+enum EstadoVisibilidadPortafolio {
+  VISIBLE
+  OCULTO
+  ELIMINADO
+}
+
+enum EstadoVisibilidadCalificacion {
+  VISIBLE
+  OCULTA
+}
+
+enum EstadoSimulacionLookIA {
+  PROCESANDO
+  COMPLETADA
+  FALLIDA
+  ELIMINADA
+}
+
+enum TipoNotificacion {
+  RESERVA_CREADA
+  RESERVA_ACEPTADA
+  RESERVA_RECHAZADA
+  RESERVA_CANCELADA
+  RESERVA_EN_CAMINO
+  RESERVA_INICIADA
+  RESERVA_FINALIZADA
+  PAGO_COMPROBANTE_SUBIDO
+  PAGO_CONFIRMADO
+  PAGO_CANCELADO
+  PAGO_REEMBOLSADO
+  BARBERO_APROBADO
+  BARBERO_RECHAZADO
+  CALIFICACION_RECIBIDA
+  LOOKIA_COMPLETADA
+  PORTAFOLIO_MODERADO
+  SISTEMA
+}
+
+model Rol {
+  idRol         Int       @id @default(autoincrement()) @map("id_rol")
+  nombre        String    @unique @map("nombre")
+  descripcion   String?   @map("descripcion")
+  estado        Boolean   @default(true) @map("estado")
+  fechaCreacion DateTime  @default(now()) @map("fecha_creacion")
+  usuarios      Usuario[]
+
+  @@map("roles")
+}
+
+model Usuario {
+  idUsuario          String       @id @default(uuid()) @map("id_usuario") @db.Uuid
+  idRol              Int          @map("id_rol")
+  nombres            String       @map("nombres")
+  apellidos          String       @map("apellidos")
+  correo             String       @unique @map("correo")
+  telefono           String       @map("telefono")
+  contrasenaHash     String       @map("contrasena_hash")
+  fotoPerfilUrl      String?      @map("foto_perfil_url")
+  estadoCuenta       EstadoCuenta @default(PENDIENTE) @map("estado_cuenta")
+  correoVerificado   Boolean      @default(false) @map("correo_verificado")
+  ultimoAcceso       DateTime?    @map("ultimo_acceso")
+  fechaCreacion      DateTime     @default(now()) @map("fecha_creacion")
+  fechaActualizacion DateTime     @updatedAt @map("fecha_actualizacion")
+  fechaEliminacion   DateTime?    @map("fecha_eliminacion")
+
+  rol                     Rol                      @relation(fields: [idRol], references: [idRol])
+  cliente                 Cliente?
+  barbero                 Barbero?
+  barberosAprobados       Barbero[]                @relation("BarberosAprobados")
+  historialEstadosReserva HistorialEstadoReserva[]
+  historialEstadosPago    HistorialEstadoPago[]
+  notificaciones          Notificacion[]
+
+  @@map("usuarios")
+}
+
+model Cliente {
+  idCliente          String    @id @default(uuid()) @map("id_cliente") @db.Uuid
+  idUsuario          String    @unique @map("id_usuario") @db.Uuid
+  fechaNacimiento    DateTime? @map("fecha_nacimiento")
+  estiloPreferido    String?   @map("estilo_preferido")
+  fechaCreacion      DateTime  @default(now()) @map("fecha_creacion")
+  fechaActualizacion DateTime  @updatedAt @map("fecha_actualizacion")
+
+  usuario            Usuario            @relation(fields: [idUsuario], references: [idUsuario])
+  reservas           Reserva[]
+  calificaciones     Calificacion[]
+  simulacionesLookIA SimulacionLookIA[]
+
+  @@map("clientes")
+}
+
+model Barbero {
+  idBarbero                String           @id @default(uuid()) @map("id_barbero") @db.Uuid
+  idUsuario                String           @unique @map("id_usuario") @db.Uuid
+  nombreProfesional        String           @map("nombre_profesional")
+  biografia                String?          @map("biografia")
+  anosExperiencia          Int              @default(0) @map("anos_experiencia")
+  estadoAprobacion         EstadoAprobacion @default(PENDIENTE) @map("estado_aprobacion")
+  calificacionPromedio     Decimal          @default(0.00) @map("calificacion_promedio") @db.Decimal(3, 2)
+  totalServiciosRealizados Int              @default(0) @map("total_servicios_realizados")
+  disponible               Boolean          @default(false) @map("disponible")
+  fechaAprobacion          DateTime?        @map("fecha_aprobacion")
+  aprobadoPor              String?          @map("aprobado_por") @db.Uuid
+  fechaCreacion            DateTime         @default(now()) @map("fecha_creacion")
+  fechaActualizacion       DateTime         @updatedAt @map("fecha_actualizacion")
+
+  usuario                Usuario                 @relation(fields: [idUsuario], references: [idUsuario])
+  aprobador              Usuario?                @relation("BarberosAprobados", fields: [aprobadoPor], references: [idUsuario])
+  serviciosBarberos      ServicioBarbero[]
+  especialidadesBarberos EspecialidadBarbero[]
+  zonasBarberos          ZonaBarbero[]
+  horariosDisponibilidad HorarioDisponibilidad[]
+  bloqueosHorarios       BloqueoHorario[]
+  reservas               Reserva[]
+  portafoliosCortes      PortafolioCorte[]
+  calificaciones         Calificacion[]
+
+  @@map("barberos")
+}
+
+model Servicio {
+  idServicio         String   @id @default(uuid()) @map("id_servicio") @db.Uuid
+  nombre             String   @map("nombre")
+  slug               String   @unique @map("slug")
+  descripcion        String?  @map("descripcion")
+  precioBase         Decimal  @map("precio_base") @db.Decimal(10, 2)
+  duracionMinutos    Int      @map("duracion_minutos")
+  activo             Boolean  @default(true) @map("activo")
+  fechaCreacion      DateTime @default(now()) @map("fecha_creacion")
+  fechaActualizacion DateTime @updatedAt @map("fecha_actualizacion")
+
+  serviciosBarberos ServicioBarbero[]
+  reservas          Reserva[]
+
+  @@map("servicios")
+}
+
+model ServicioBarbero {
+  idServicioBarbero     String   @id @default(uuid()) @map("id_servicio_barbero") @db.Uuid
+  idBarbero             String   @map("id_barbero") @db.Uuid
+  idServicio            String   @map("id_servicio") @db.Uuid
+  precioPersonalizado   Decimal? @map("precio_personalizado") @db.Decimal(10, 2)
+  duracionPersonalizada Int?     @map("duracion_personalizada")
+  activo                Boolean  @default(true) @map("activo")
+  fechaCreacion         DateTime @default(now()) @map("fecha_creacion")
+  fechaActualizacion    DateTime @updatedAt @map("fecha_actualizacion")
+
+  barbero  Barbero  @relation(fields: [idBarbero], references: [idBarbero])
+  servicio Servicio @relation(fields: [idServicio], references: [idServicio])
+
+  @@unique([idBarbero, idServicio])
+  @@map("servicios_barberos")
+}
+
+model Especialidad {
+  idEspecialidad     String   @id @default(uuid()) @map("id_especialidad") @db.Uuid
+  nombre             String   @map("nombre")
+  slug               String   @unique @map("slug")
+  descripcion        String?  @map("descripcion")
+  activa             Boolean  @default(true) @map("activa")
+  fechaCreacion      DateTime @default(now()) @map("fecha_creacion")
+  fechaActualizacion DateTime @updatedAt @map("fecha_actualizacion")
+
+  especialidadesBarberos EspecialidadBarbero[]
+
+  @@map("especialidades")
+}
+
+model EspecialidadBarbero {
+  idEspecialidadBarbero String   @id @default(uuid()) @map("id_especialidad_barbero") @db.Uuid
+  idBarbero             String   @map("id_barbero") @db.Uuid
+  idEspecialidad        String   @map("id_especialidad") @db.Uuid
+  fechaCreacion         DateTime @default(now()) @map("fecha_creacion")
+
+  barbero      Barbero      @relation(fields: [idBarbero], references: [idBarbero])
+  especialidad Especialidad @relation(fields: [idEspecialidad], references: [idEspecialidad])
+
+  @@unique([idBarbero, idEspecialidad])
+  @@map("especialidades_barberos")
+}
+
+model ZonaCobertura {
+  idZonaCobertura    String   @id @default(uuid()) @map("id_zona_cobertura") @db.Uuid
+  nombre             String   @map("nombre")
+  slug               String   @unique @map("slug")
+  distrito           String   @map("distrito")
+  provincia          String   @default("Lima") @map("provincia")
+  departamento       String   @default("Lima") @map("departamento")
+  activa             Boolean  @default(true) @map("activa")
+  fechaCreacion      DateTime @default(now()) @map("fecha_creacion")
+  fechaActualizacion DateTime @updatedAt @map("fecha_actualizacion")
+
+  zonasBarberos ZonaBarbero[]
+  reservas      Reserva[]
+
+  @@map("zonas_cobertura")
+}
+
+model ZonaBarbero {
+  idZonaBarbero         String   @id @default(uuid()) @map("id_zona_barbero") @db.Uuid
+  idBarbero             String   @map("id_barbero") @db.Uuid
+  idZonaCobertura       String   @map("id_zona_cobertura") @db.Uuid
+  costoTraslado         Decimal? @map("costo_traslado") @db.Decimal(10, 2)
+  tiempoTrasladoMinutos Int?     @map("tiempo_traslado_minutos")
+  activa                Boolean  @default(true) @map("activa")
+  fechaCreacion         DateTime @default(now()) @map("fecha_creacion")
+  fechaActualizacion    DateTime @updatedAt @map("fecha_actualizacion")
+
+  barbero       Barbero       @relation(fields: [idBarbero], references: [idBarbero])
+  zonaCobertura ZonaCobertura @relation(fields: [idZonaCobertura], references: [idZonaCobertura])
+
+  @@unique([idBarbero, idZonaCobertura])
+  @@map("zonas_barberos")
+}
+
+model HorarioDisponibilidad {
+  idHorarioDisponibilidad String    @id @default(uuid()) @map("id_horario_disponibilidad") @db.Uuid
+  idBarbero               String    @map("id_barbero") @db.Uuid
+  diaSemana               DiaSemana @map("dia_semana")
+  horaInicio              String    @map("hora_inicio")
+  horaFin                 String    @map("hora_fin")
+  activo                  Boolean   @default(true) @map("activo")
+  fechaCreacion           DateTime  @default(now()) @map("fecha_creacion")
+  fechaActualizacion      DateTime  @updatedAt @map("fecha_actualizacion")
+
+  barbero Barbero @relation(fields: [idBarbero], references: [idBarbero])
+
+  @@index([idBarbero, diaSemana])
+  @@map("horarios_disponibilidad")
+}
+
+model BloqueoHorario {
+  idBloqueoHorario   String   @id @default(uuid()) @map("id_bloqueo_horario") @db.Uuid
+  idBarbero          String   @map("id_barbero") @db.Uuid
+  fechaInicio        DateTime @map("fecha_inicio")
+  fechaFin           DateTime @map("fecha_fin")
+  motivo             String?  @map("motivo")
+  activo             Boolean  @default(true) @map("activo")
+  fechaCreacion      DateTime @default(now()) @map("fecha_creacion")
+  fechaActualizacion DateTime @updatedAt @map("fecha_actualizacion")
+
+  barbero Barbero @relation(fields: [idBarbero], references: [idBarbero])
+
+  @@index([idBarbero, fechaInicio, fechaFin])
+  @@map("bloqueos_horarios")
+}
+
+model Reserva {
+  idReserva           String        @id @default(uuid()) @map("id_reserva") @db.Uuid
+  idCliente           String        @map("id_cliente") @db.Uuid
+  idBarbero           String        @map("id_barbero") @db.Uuid
+  idServicio          String        @map("id_servicio") @db.Uuid
+  idDireccion         String?       @map("id_direccion") @db.Uuid
+  idZonaCobertura     String        @map("id_zona_cobertura") @db.Uuid
+  fechaReserva        DateTime      @map("fecha_reserva")
+  horaInicio          String        @map("hora_inicio")
+  horaFin             String        @map("hora_fin")
+  estadoReserva       EstadoReserva @default(PENDIENTE) @map("estado_reserva")
+  metodoPago          MetodoPago    @map("metodo_pago")
+  precioServicio      Decimal       @map("precio_servicio") @db.Decimal(10, 2)
+  costoTraslado       Decimal       @default(0) @map("costo_traslado") @db.Decimal(10, 2)
+  total               Decimal       @map("total") @db.Decimal(10, 2)
+  indicacionesCliente String?       @map("indicaciones_cliente")
+  motivoCancelacion   String?       @map("motivo_cancelacion")
+  fechaCreacion       DateTime      @default(now()) @map("fecha_creacion")
+  fechaActualizacion  DateTime      @updatedAt @map("fecha_actualizacion")
+
+  cliente       Cliente       @relation(fields: [idCliente], references: [idCliente])
+  barbero       Barbero       @relation(fields: [idBarbero], references: [idBarbero])
+  servicio      Servicio      @relation(fields: [idServicio], references: [idServicio])
+  zonaCobertura ZonaCobertura @relation(fields: [idZonaCobertura], references: [idZonaCobertura])
+
+  historialEstados HistorialEstadoReserva[]
+  pago             Pago?
+  calificacion     Calificacion?
+
+  @@index([idCliente, fechaReserva])
+  @@index([idBarbero, fechaReserva])
+  @@index([estadoReserva])
+  @@map("reservas")
+}
+
+model HistorialEstadoReserva {
+  idHistorialEstadoReserva String         @id @default(uuid()) @map("id_historial_estado_reserva") @db.Uuid
+  idReserva                String         @map("id_reserva") @db.Uuid
+  estadoAnterior           EstadoReserva? @map("estado_anterior")
+  estadoNuevo              EstadoReserva  @map("estado_nuevo")
+  idUsuarioResponsable     String?        @map("id_usuario_responsable") @db.Uuid
+  comentario               String?        @map("comentario")
+  fechaCreacion            DateTime       @default(now()) @map("fecha_creacion")
+
+  reserva            Reserva  @relation(fields: [idReserva], references: [idReserva])
+  usuarioResponsable Usuario? @relation(fields: [idUsuarioResponsable], references: [idUsuario])
+
+  @@index([idReserva])
+  @@map("historial_estados_reserva")
+}
+
+model Pago {
+  idPago             String     @id @default(uuid()) @map("id_pago") @db.Uuid
+  idReserva          String     @unique @map("id_reserva") @db.Uuid
+  metodoPago         MetodoPago @map("metodo_pago")
+  estadoPago         EstadoPago @default(PENDIENTE) @map("estado_pago")
+  montoServicio      Decimal    @map("monto_servicio") @db.Decimal(10, 2)
+  montoTraslado      Decimal    @default(0) @map("monto_traslado") @db.Decimal(10, 2)
+  montoTotal         Decimal    @map("monto_total") @db.Decimal(10, 2)
+  comprobanteUrl     String?    @map("comprobante_url")
+  codigoOperacion    String?    @map("codigo_operacion")
+  observacion        String?    @map("observacion")
+  fechaConfirmacion  DateTime?  @map("fecha_confirmacion")
+  fechaCreacion      DateTime   @default(now()) @map("fecha_creacion")
+  fechaActualizacion DateTime   @updatedAt @map("fecha_actualizacion")
+
+  reserva Reserva @relation(fields: [idReserva], references: [idReserva])
+
+  historialPagos HistorialEstadoPago[]
+
+  @@index([estadoPago])
+  @@map("pagos")
+}
+
+model HistorialEstadoPago {
+  idHistorialEstadoPago String      @id @default(uuid()) @map("id_historial_estado_pago") @db.Uuid
+  idPago                String      @map("id_pago") @db.Uuid
+  estadoAnterior        EstadoPago? @map("estado_anterior")
+  estadoNuevo           EstadoPago  @map("estado_nuevo")
+  idUsuarioResponsable  String?     @map("id_usuario_responsable") @db.Uuid
+  comentario            String?     @map("comentario")
+  fechaCreacion         DateTime    @default(now()) @map("fecha_creacion")
+
+  pago               Pago     @relation(fields: [idPago], references: [idPago])
+  usuarioResponsable Usuario? @relation(fields: [idUsuarioResponsable], references: [idUsuario])
+
+  @@index([idPago])
+  @@map("historial_estados_pago")
+}
+
+model CategoriaCorte {
+  idCategoriaCorte   String   @id @default(uuid()) @map("id_categoria_corte") @db.Uuid
+  nombre             String   @map("nombre")
+  slug               String   @unique @map("slug")
+  descripcion        String?  @map("descripcion")
+  activa             Boolean  @default(true) @map("activa")
+  fechaCreacion      DateTime @default(now()) @map("fecha_creacion")
+  fechaActualizacion DateTime @updatedAt @map("fecha_actualizacion")
+
+  portafolios   PortafolioCorte[]
+  estilosLookIA EstiloLookIA[]
+
+  @@map("categorias_cortes")
+}
+
+model PortafolioCorte {
+  idPortafolioCorte  String                      @id @default(uuid()) @map("id_portafolio_corte") @db.Uuid
+  idBarbero          String                      @map("id_barbero") @db.Uuid
+  idCategoriaCorte   String?                     @map("id_categoria_corte") @db.Uuid
+  titulo             String                      @map("titulo")
+  descripcion        String?                     @map("descripcion")
+  imagenUrl          String                      @map("imagen_url")
+  destacado          Boolean                     @default(false) @map("destacado")
+  estadoVisibilidad  EstadoVisibilidadPortafolio @default(VISIBLE) @map("estado_visibilidad")
+  motivoModeracion   String?                     @map("motivo_moderacion")
+  fechaCreacion      DateTime                    @default(now()) @map("fecha_creacion")
+  fechaActualizacion DateTime                    @updatedAt @map("fecha_actualizacion")
+
+  barbero        Barbero         @relation(fields: [idBarbero], references: [idBarbero])
+  categoriaCorte CategoriaCorte? @relation(fields: [idCategoriaCorte], references: [idCategoriaCorte])
+
+  @@index([idBarbero])
+  @@index([idCategoriaCorte])
+  @@index([estadoVisibilidad])
+  @@map("portafolios_cortes")
+}
+
+model Calificacion {
+  idCalificacion     String                        @id @default(uuid()) @map("id_calificacion") @db.Uuid
+  idReserva          String                        @unique @map("id_reserva") @db.Uuid
+  idCliente          String                        @map("id_cliente") @db.Uuid
+  idBarbero          String                        @map("id_barbero") @db.Uuid
+  puntuacion         Int                           @map("puntuacion")
+  comentario         String?                       @map("comentario")
+  estadoVisibilidad  EstadoVisibilidadCalificacion @default(VISIBLE) @map("estado_visibilidad")
+  motivoModeracion   String?                       @map("motivo_moderacion")
+  fechaCreacion      DateTime                      @default(now()) @map("fecha_creacion")
+  fechaActualizacion DateTime                      @updatedAt @map("fecha_actualizacion")
+
+  reserva Reserva @relation(fields: [idReserva], references: [idReserva])
+  cliente Cliente @relation(fields: [idCliente], references: [idCliente])
+  barbero Barbero @relation(fields: [idBarbero], references: [idBarbero])
+
+  @@index([idCliente])
+  @@index([idBarbero])
+  @@index([estadoVisibilidad])
+  @@map("calificaciones")
+}
+
+model EstiloLookIA {
+  idEstiloLookIA      String   @id @default(uuid()) @map("id_estilo_lookia") @db.Uuid
+  idCategoriaCorte    String?  @map("id_categoria_corte") @db.Uuid
+  nombre              String   @map("nombre")
+  slug                String   @unique @map("slug")
+  descripcion         String?  @map("descripcion")
+  promptBase          String?  @map("prompt_base")
+  imagenReferenciaUrl String?  @map("imagen_referencia_url")
+  activo              Boolean  @default(true) @map("activo")
+  fechaCreacion       DateTime @default(now()) @map("fecha_creacion")
+  fechaActualizacion  DateTime @updatedAt @map("fecha_actualizacion")
+
+  categoriaCorte CategoriaCorte?    @relation(fields: [idCategoriaCorte], references: [idCategoriaCorte])
+  simulaciones   SimulacionLookIA[]
+
+  @@index([idCategoriaCorte])
+  @@map("estilos_lookia")
+}
+
+model SimulacionLookIA {
+  idSimulacionLookIA     String                 @id @default(uuid()) @map("id_simulacion_lookia") @db.Uuid
+  idCliente              String                 @map("id_cliente") @db.Uuid
+  idEstiloLookIA         String                 @map("id_estilo_lookia") @db.Uuid
+  imagenOriginalUrl      String                 @map("imagen_original_url")
+  imagenResultadoUrl     String?                @map("imagen_resultado_url")
+  estadoSimulacion       EstadoSimulacionLookIA @default(PROCESANDO) @map("estado_simulacion")
+  consentimientoAceptado Boolean                @default(false) @map("consentimiento_aceptado")
+  mensajeError           String?                @map("mensaje_error")
+  fechaProcesamiento     DateTime?              @map("fecha_procesamiento")
+  fechaCreacion          DateTime               @default(now()) @map("fecha_creacion")
+  fechaActualizacion     DateTime               @updatedAt @map("fecha_actualizacion")
+
+  cliente      Cliente      @relation(fields: [idCliente], references: [idCliente])
+  estiloLookIA EstiloLookIA @relation(fields: [idEstiloLookIA], references: [idEstiloLookIA])
+
+  @@index([idCliente])
+  @@index([idEstiloLookIA])
+  @@index([estadoSimulacion])
+  @@map("simulaciones_lookia")
+}
+
+model Notificacion {
+  idNotificacion String           @id @default(uuid()) @map("id_notificacion") @db.Uuid
+  idUsuario      String           @map("id_usuario") @db.Uuid
+  tipo           TipoNotificacion @map("tipo")
+  titulo         String           @map("titulo")
+  mensaje        String           @map("mensaje")
+  leida          Boolean          @default(false) @map("leida")
+  enlaceAccion   String?          @map("enlace_accion")
+  metadata       Json?            @map("metadata")
+  fechaLectura   DateTime?        @map("fecha_lectura")
+  fechaCreacion  DateTime         @default(now()) @map("fecha_creacion")
+
+  usuario Usuario @relation(fields: [idUsuario], references: [idUsuario])
+
+  @@index([idUsuario, leida])
+  @@index([tipo])
+  @@index([fechaCreacion])
+  @@map("notificaciones")
+}
