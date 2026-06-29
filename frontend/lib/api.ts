@@ -1,9 +1,11 @@
-const apiConfigurada = (
-  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5050/api"
-).replace(/\/+$/, "");
+const apiConfigurada = (process.env.NEXT_PUBLIC_API_URL ?? "")
+  .trim()
+  .replace(/\/+$/, "");
 
-export const API_ORIGIN = apiConfigurada.replace(/\/api$/i, "");
-export const API_URL = `${API_ORIGIN}/api`;
+export const API_ORIGIN = apiConfigurada
+  ? apiConfigurada.replace(/\/api$/i, "")
+  : "";
+export const API_URL = API_ORIGIN ? `${API_ORIGIN}/api` : "/api";
 
 export class ApiError extends Error {
   constructor(
@@ -52,7 +54,7 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}): Prom
 export function resolverUrlArchivo(url?: string | null) {
   if (!url) return null;
   if (/^https?:\/\//i.test(url)) return url;
-  if (url.startsWith("/")) return `${API_ORIGIN}${url}`;
+  if (url.startsWith("/")) return API_ORIGIN ? `${API_ORIGIN}${url}` : url;
 
-  return `${API_ORIGIN}/${url}`;
+  return API_ORIGIN ? `${API_ORIGIN}/${url}` : `/${url}`;
 }
