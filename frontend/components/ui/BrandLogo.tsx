@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 const LOGO_URL =
-  "https://kcdsmhcybkqkgsncjoyr.supabase.co/storage/v1/object/public/logos/tijera-brava-logo-navbar.png";
+  "https://kcdsmhcybkqkgsncjoyr.supabase.co/storage/v1/object/public/logos/tijera-brava-logo.png";
 
 type BrandLogoProps = {
   href?: string;
