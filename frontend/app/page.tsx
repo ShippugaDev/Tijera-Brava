@@ -52,6 +52,9 @@ const heroCards = [
   }
 ];
 
+const LOGO_URL =
+  "https://kcdsmhcybkqkgsncjoyr.supabase.co/storage/v1/object/public/logos/tijera-brava-logo-navbar.png";
+
 const menu = [
   ["Inicio", "#inicio"],
   ["Servicios", "#servicios"],
@@ -107,9 +110,13 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-[#050505] text-white">
       <nav className="sticky top-0 z-40 border-b border-white/10 bg-[#050505]/90 backdrop-blur">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4">
-          <a className="text-xl font-black tracking-tight" href="#inicio">
-            Tijera <span className="text-[#d4af37]">Brava</span>
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-3">
+          <a className="flex min-w-[170px] items-center" href="#inicio">
+            <img
+              alt="Logo Tijera Brava"
+              className="h-11 w-auto object-contain sm:h-12 lg:h-14"
+              src={LOGO_URL}
+            />
           </a>
           <div className="hidden items-center gap-6 lg:flex">
             {menu.map(([label, href]) => (
