@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { BarberosDestacados } from "@/components/landing/BarberosDestacados";
 import { GaleriaPortafolio } from "@/components/landing/GaleriaPortafolio";
 import { TestimoniosReales } from "@/components/landing/TestimoniosReales";
+import { BrandLogo } from "@/components/ui/BrandLogo";
 
 const beneficios = [
   {
@@ -51,9 +52,6 @@ const heroCards = [
     descripcion: "Elige profesionales aprobados con portafolio, experiencia y reseñas reales."
   }
 ];
-
-const LOGO_URL =
-  "https://kcdsmhcybkqkgsncjoyr.supabase.co/storage/v1/object/public/logos/tijera-brava-logo-navbar.png";
 
 const menu = [
   ["Inicio", "#inicio"],
@@ -111,13 +109,11 @@ export default function Home() {
     <main className="min-h-screen bg-[#050505] text-white">
       <nav className="sticky top-0 z-40 border-b border-white/10 bg-[#050505]/90 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-3">
-          <a className="flex min-w-[170px] items-center" href="#inicio">
-            <img
-              alt="Logo Tijera Brava"
-              className="h-11 w-auto object-contain sm:h-12 lg:h-14"
-              src={LOGO_URL}
-            />
-          </a>
+          <BrandLogo
+            className="min-w-[170px]"
+            href="#inicio"
+            imgClassName="h-11 w-auto object-contain sm:h-12 lg:h-14"
+          />
           <div className="hidden items-center gap-6 lg:flex">
             {menu.map(([label, href]) => (
               <a
@@ -319,9 +315,7 @@ export default function Home() {
       <footer className="border-t border-white/10 bg-[#050505] px-5 py-12" id="contacto">
         <div className="mx-auto grid max-w-7xl gap-8 md:grid-cols-4">
           <div>
-            <p className="text-xl font-black">
-              Tijera <span className="text-[#d4af37]">Brava</span>
-            </p>
+            <BrandLogo href="#inicio" imgClassName="h-10 w-auto object-contain" />
             <p className="mt-4 text-sm leading-6 text-[#b5b5b5]">
               Plataforma de reservas de barbería masculina a domicilio con estilo premium.
             </p>

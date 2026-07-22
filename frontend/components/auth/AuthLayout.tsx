@@ -1,5 +1,5 @@
-import Link from "next/link";
 import type { ReactNode } from "react";
+import { BrandLogo } from "@/components/ui/BrandLogo";
 
 type AuthLayoutProps = {
   etiqueta: string;
@@ -30,9 +30,7 @@ export function AuthLayout({ etiqueta, titulo, subtitulo, children }: AuthLayout
       <div className="relative z-10 mx-auto grid min-h-[calc(100vh-4rem)] max-w-6xl overflow-hidden rounded-[2rem] border border-[#d4af37]/20 bg-[#0d0d0d]/90 shadow-2xl shadow-black/50 lg:grid-cols-[0.95fr_1.05fr]">
         <section className="hidden border-r border-white/10 bg-[linear-gradient(160deg,#171717,#050505)] p-10 lg:flex lg:flex-col lg:justify-between">
           <div>
-            <Link className="text-2xl font-black tracking-tight" href="/">
-              Tijera <span className="text-[#d4af37]">Brava</span>
-            </Link>
+            <BrandLogo imgClassName="h-16 w-auto object-contain" />
             <div className="mt-12">
               <p className="text-sm font-bold uppercase tracking-[0.24em] text-[#f5d77b]">
                 Barbería premium
@@ -58,9 +56,7 @@ export function AuthLayout({ etiqueta, titulo, subtitulo, children }: AuthLayout
 
         <section className="flex items-center justify-center p-5 sm:p-8 lg:p-10">
           <div className="w-full max-w-xl">
-            <Link className="mb-8 inline-flex text-xl font-black lg:hidden" href="/">
-              Tijera <span className="ml-1 text-[#d4af37]">Brava</span>
-            </Link>
+            <BrandLogo className="mb-8 lg:hidden" imgClassName="h-14 w-auto object-contain" />
             <div className="rounded-[1.5rem] border border-[#d4af37]/20 bg-[#050505]/80 p-6 shadow-xl shadow-black/30 sm:p-8">
               <p className="text-sm font-bold uppercase tracking-[0.24em] text-[#d4af37]">
                 {etiqueta}

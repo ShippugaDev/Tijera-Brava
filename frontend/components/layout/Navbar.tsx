@@ -8,6 +8,7 @@ import { resolverUrlArchivo } from "@/lib/api";
 import type { UsuarioSesion } from "@/lib/types";
 import { Button } from "@/components/ui/Button";
 import { RoleBadge } from "@/components/ui/RoleBadge";
+import { BrandLogo } from "@/components/ui/BrandLogo";
 
 const getLogoHref = (pathname: string) => {
   if (pathname.startsWith("/cliente")) return "/cliente";
@@ -44,9 +45,7 @@ export function Navbar({ usuario }: { usuario?: UsuarioSesion }) {
   return (
     <header className="sticky top-0 z-30 border-b border-[#d4af37]/15 bg-[#050505]/92 backdrop-blur">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4">
-        <Link className="text-xl font-black tracking-tight text-white" href={logoHref}>
-          Tijera <span className="text-[#d4af37]">Brava</span>
-        </Link>
+        <BrandLogo href={logoHref} imgClassName="h-10 w-auto object-contain sm:h-12" />
         <nav className="flex items-center gap-3">
           {usuario ? (
             <>
