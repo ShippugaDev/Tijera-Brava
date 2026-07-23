@@ -8,6 +8,7 @@ import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { RoleLayout } from "@/components/layout/RoleLayout";
 import { Card } from "@/components/ui/Card";
 import { FormError } from "@/components/ui/FormMessage";
+import { ImageLightbox } from "@/components/ui/ImageLightbox";
 import { Loading } from "@/components/ui/Loading";
 import { resolverUrlArchivo } from "@/lib/api";
 import { getEstadoBadgeClass } from "@/lib/status-styles";
@@ -92,7 +93,15 @@ function FotoPerfilBarbero({ barbero }: { barbero: BarberoPublico }) {
   );
 }
 
-function PortafolioImagen({ imagenUrl, titulo }: { imagenUrl?: string | null; titulo: string }) {
+function PortafolioImagen({
+  imagenUrl,
+  titulo,
+  onAmpliar
+}: {
+  imagenUrl?: string | null;
+  titulo: string;
+  onAmpliar: () => void;
+}) {
   const [fallo, setFallo] = useReactState(false);
 
   if (!imagenUrl || fallo) {
@@ -107,7 +116,8 @@ function PortafolioImagen({ imagenUrl, titulo }: { imagenUrl?: string | null; ti
     <div className="mt-4 overflow-hidden rounded-lg border border-[#d4af37]/20 bg-black">
       <img
         alt={titulo}
-        className="h-56 w-full object-cover"
+        className="h-56 w-full cursor-pointer object-cover transition duration-300 hover:scale-[1.02] hover:brightness-110 hover:shadow-[0_0_20px_rgba(212,175,55,0.25)]"
+        onClick={onAmpliar}
         onError={() => setFallo(true)}
         src={imagenUrl}
       />
@@ -115,7 +125,15 @@ function PortafolioImagen({ imagenUrl, titulo }: { imagenUrl?: string | null; ti
   );
 }
 
-function PortafolioPublicacionCard({ publicacion }: { publicacion: PortafolioCorte }) {
+function PortafolioPublicacionCard({
+  publicacion,
+  onImagenClick
+}: {
+  publicacion: PortafolioCorte;
+  onImagenClick: (imagenUrl: string, titulo: string) => void;
+}) {
+  const imagenUrl = resolverUrlArchivo(publicacion.imagenUrl);
+
   return (
     <article className="rounded-xl border border-white/10 bg-[#171717] p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -132,7 +150,8 @@ function PortafolioPublicacionCard({ publicacion }: { publicacion: PortafolioCor
         ) : null}
       </div>
       <PortafolioImagen
-        imagenUrl={resolverUrlArchivo(publicacion.imagenUrl)}
+        imagenUrl={imagenUrl}
+        onAmpliar={() => imagenUrl && onImagenClick(imagenUrl, publicacion.titulo)}
         titulo={publicacion.titulo}
       />
       <div className="mt-4 flex flex-wrap gap-3 text-sm text-[#b5b5b5]">
@@ -190,6 +209,9 @@ function PerfilContent({ usuario }: { usuario: UsuarioSesion }) {
   const [calificacionesTotal, setCalificacionesTotal] = useState(0);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
+  const [imagenAmpliada, setImagenAmpliada] = useState<{ url: string; titulo: string } | null>(
+    null
+  );
 
   useEffect(() => {
     let activo = true;
@@ -347,6 +369,7 @@ function PerfilContent({ usuario }: { usuario: UsuarioSesion }) {
                 {portafolio.map((publicacion) => (
                   <PortafolioPublicacionCard
                     key={publicacion.idPortafolioCorte}
+                    onImagenClick={(url, titulo) => setImagenAmpliada({ url, titulo })}
                     publicacion={publicacion}
                   />
                 ))}
@@ -382,6 +405,11 @@ function PerfilContent({ usuario }: { usuario: UsuarioSesion }) {
           </section>
         </div>
       ) : null}
+      <ImageLightbox
+        alt={imagenAmpliada?.titulo}
+        onClose={() => setImagenAmpliada(null)}
+        src={imagenAmpliada?.url ?? null}
+      />
     </RoleLayout>
   );
 }

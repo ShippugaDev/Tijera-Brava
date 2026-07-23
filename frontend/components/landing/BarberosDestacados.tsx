@@ -69,8 +69,16 @@ function BarberoDestacadoCard({ barbero }: { barbero: BarberoPublico }) {
       barbero.urlFoto ??
       barbero.avatarUrl
   );
-  const nombre = barbero.nombreProfesional || "Profesional Tijera Brava";
-  const iniciales = nombre
+  const nombreReal = [barbero.usuario?.nombres, barbero.usuario?.apellidos]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
+  const nombrePrincipal = nombreReal || barbero.nombreProfesional || "Profesional Tijera Brava";
+  const nombreProfesional =
+    barbero.nombreProfesional && barbero.nombreProfesional !== nombrePrincipal
+      ? barbero.nombreProfesional
+      : null;
+  const iniciales = nombrePrincipal
     .split(" ")
     .filter(Boolean)
     .slice(0, 2)
@@ -86,7 +94,7 @@ function BarberoDestacadoCard({ barbero }: { barbero: BarberoPublico }) {
     <article className="flex min-h-[350px] flex-col rounded-lg border border-white/10 bg-[#0d0d0d] p-5 transition hover:-translate-y-1 hover:border-[#d4af37]/45">
       {fotoPerfil && !fotoFallida ? (
         <img
-          alt={`Foto de ${nombre}`}
+          alt={`Foto de ${nombrePrincipal}`}
           className="h-40 w-full rounded-lg border border-[#d4af37]/20 object-cover"
           onError={() => setFotoFallida(true)}
           src={fotoPerfil}
@@ -96,7 +104,10 @@ function BarberoDestacadoCard({ barbero }: { barbero: BarberoPublico }) {
           {iniciales}
         </div>
       )}
-      <h3 className="mt-5 text-xl font-black text-white">{nombre}</h3>
+      <h3 className="mt-5 text-xl font-black text-white">{nombrePrincipal}</h3>
+      {nombreProfesional ? (
+        <p className="text-sm font-semibold text-[#d4af37]">{nombreProfesional}</p>
+      ) : null}
       <p className="mt-2 min-h-10 text-sm leading-5 text-[#b5b5b5]">{especialidad}</p>
       <div className="mt-4 flex items-center justify-between gap-3 text-sm">
         <span className="text-[#f5d77b]">★★★★★ {calificacion}</span>
